@@ -1,6 +1,5 @@
 import { motion, useScroll, useTransform, useSpring, useMotionValueEvent } from 'framer-motion';
 import { useState, useRef } from 'react';
-import type { Variants } from 'framer-motion';
 import {
   FaRobot,
   FaArrowRight,
@@ -11,40 +10,12 @@ import {
   FaLayerGroup
 } from 'react-icons/fa6';
 
-/* ────────── Scroll-based Section with Text Reveal ────────── */
-function AnimatedSection({ 
-  children, 
-  sectionKey 
-}: { 
-  children: React.ReactNode; 
-  sectionKey: string;
-}) {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  
-  return (
-    <motion.div
-      ref={sectionRef}
-      className="animated-section"
-      style={{
-        position: 'relative',
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        overflow: 'hidden',
-      }}
-    >
-      {children}
-    </motion.div>
-  );
-}
 import Background3D from './components/Background3D';
 import CustomCursor from './components/CustomCursor';
 import './index.css';
 
 /* ────────── Navbar (Pill Crystal) ────────── */
-const Navbar = ({ visible, scrollVal }: { visible: boolean; scrollVal: number }) => {
+const Navbar = ({ visible }: { visible: boolean }) => {
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   
   return (
@@ -120,26 +91,10 @@ const Navbar = ({ visible, scrollVal }: { visible: boolean; scrollVal: number })
   );
 };
 
-/* ────────── Animation variants ────────── */
-const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 60 },
-  visible: (d: number = 0) => ({
-    opacity: 1, y: 0,
-    transition: { duration: 1, delay: d, ease: [0.23, 1, 0.32, 1] }
-  })
-};
-
-const stagger: Variants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.08 } }
-};
-
 function AnimatedText({ 
   children, 
-  sectionKey 
 }: { 
   children: React.ReactNode; 
-  sectionKey: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
@@ -187,7 +142,6 @@ export default function App() {
   useMotionValueEvent(smooth, 'change', (v) => setScrollVal(v));
 
   // ── UI appears after initial scroll ──
-  const uiOpacity = useTransform(scrollYProgress, [0.12, 0.22], [0, 1]);
   const showNav = scrollVal > 0.1;
 
   return (
@@ -214,13 +168,13 @@ export default function App() {
 
       {/* ── Main Content ── */}
       <div className="content">
-        <Navbar visible={showNav} scrollVal={0} />
+        <Navbar visible={showNav} />
 
         {/* Scroll spacer - waits for JA MD 2D to fully disappear (scroll 0.40) */}
         <div style={{ height: '200vh' }} />
 
         {/* ── SLOGAN ── */}
-        <AnimatedText sectionKey="slogan">
+        <AnimatedText>
           <div style={{ maxWidth: '900px', textAlign: 'center', padding: '0 5%' }}>
             <span className="tag-ia">IA + Diseño + Automatización</span>
             <h2 style={{
@@ -246,7 +200,7 @@ export default function App() {
         </AnimatedText>
 
         {/* ── SERVICIOS ── */}
-        <AnimatedText sectionKey="servicios">
+        <AnimatedText>
           <div style={{ maxWidth: '1200px', width: '100%', padding: '0 4%' }}>
             <span className="tag-ia">Nuestros servicios</span>
             <h2 className="section-title">Soluciones que<br />escalan contigo</h2>
@@ -273,7 +227,7 @@ export default function App() {
         </AnimatedText>
 
         {/* ── PROYECTOS ── */}
-        <AnimatedText sectionKey="proyectos">
+        <AnimatedText>
           <div style={{ maxWidth: '1300px', width: '100%', padding: '0 4%' }}>
             <span className="tag-ia">Portfolio</span>
             <h2 className="section-title">Trabajo<br />reciente</h2>
@@ -298,7 +252,7 @@ export default function App() {
         </AnimatedText>
 
         {/* ── CTA ── */}
-        <AnimatedText sectionKey="contacto">
+        <AnimatedText>
           <div style={{ textAlign: 'center', maxWidth: '600px', padding: '0 5%' }}>
             <span className="tag-ia">¿Tienes un proyecto en mente?</span>
             <h2 className="section-title" style={{ marginBottom: '1rem' }}>

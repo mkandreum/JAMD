@@ -1,6 +1,6 @@
-import { useRef, useMemo } from 'react';
+import { useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Float, MeshTransmissionMaterial, Environment, Sparkles, Text, Text3D, Center } from '@react-three/drei';
+import { Float, MeshTransmissionMaterial, Environment, Sparkles, Text3D, Center } from '@react-three/drei';
 import { EffectComposer, Bloom, Noise, Vignette } from '@react-three/postprocessing';
 import * as THREE from 'three';
 
@@ -452,7 +452,7 @@ export default function Background3D({ scrollPercent }: { scrollPercent: number 
         <Environment preset="night" />
         <CameraRig scrollPercent={scrollPercent} />
 
-        <EffectComposer disableNormalPass>
+        <EffectComposer multisampling={4}>
           <Bloom 
             mipmapBlur 
             luminanceThreshold={1} 
