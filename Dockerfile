@@ -1,36 +1,31 @@
-FROM node:20-alpine AS base
-
-# Install dependencies only when needed
-FROM base AS deps
+# ---- Build stage ----
+FROM node:20-alpine AS builder
 WORKDIR /app
 
-COPY package.json ./
+COPY package.json package-lock.json ./
 RUN npm ci --legacy-peer-deps
 
-# Build the application
-FROM base AS builder
-WORKDIR /app
-
-COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-
 RUN npm run build
 
-# Production image
-FROM base AS runner
-WORKDIR /app
+# ---- Production stage ----
+FROM nginx:alpine AS production
+COPY --from=builder /app/dist /usr/share/nginx/html
 
-ENV NODE_ENV=production
+RUN printf 'server {\n\
+    listen 80;\n\
+    root /usr/share/nginx/html;\n\
+    index index.html;\n\
+    gzip on;\n\
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml image/svg+xml;\n\
+    location / {\n\
+        try_files $uri $uri/ /index.html;\n\
+    }\n\
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {\n\
+        expires 1y;\n\
+        add_header Cache-Control "public, immutable";\n\
+    }\n\
+}\n' > /etc/nginx/conf.d/default.conf
 
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
-
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./
-
-USER nodejs
-
-EXPOSE 3000
-
-CMD ["npm", "run", "dev", "--", "--host"]
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
