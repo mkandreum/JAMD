@@ -497,7 +497,7 @@ function PostFX({ scrollPercent, low }: { scrollPercent: number; low: boolean })
 }
 
 /* ─── Section marker crystals ─── */
-function SectionMarkers3D({ scrollPercent }: { scrollPercent: number }) {
+function SectionMarkers3D({ scrollPercent: _scrollPercent }: { scrollPercent: number }) {
   const groupRef = useRef<THREE.Group>(null);
   useFrame(() => {
     if (!groupRef.current) return;
