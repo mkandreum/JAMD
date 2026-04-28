@@ -9,7 +9,6 @@ import {
 } from 'react-icons/fa6';
 
 import Background3D from './components/Background3D';
-import CustomCursor from './components/CustomCursor';
 import './index.css';
 
 /* ─── INPUT STYLE ─── */
@@ -193,9 +192,12 @@ function AnimatedText({ children }: { children: React.ReactNode }) {
 /* ─── INTRO AUTO-SCROLL ─── */
 function useIntroScroll() {
   useEffect(() => {
-    const DELAY    = 1800;
-    const TARGET   = window.innerHeight * 4.2;
-    const DURATION = 3200;
+    // Empieza a los 800ms (antes era 1800ms)
+    const DELAY    = 800;
+    // Target aumentado para llegar al centro de la sección "Redefinimos" (1ª AnimatedText)
+    // El spacer ocupa 200vh, cada AnimatedText ocupa 200vh; queremos el centro del primero → ~300vh
+    const TARGET   = window.innerHeight * 3.2;
+    const DURATION = 3000;
     let start: number | null = null;
     let raf: number;
     const ease = (t: number) => t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2;
@@ -280,7 +282,6 @@ export default function App() {
   return (
     <>
       <Background3D scrollPercent={scrollVal} />
-      <CustomCursor />
       <ContactModal open={contactOpen} onClose={() => setContactOpen(false)} />
 
       {/* 2D Letters hero */}
