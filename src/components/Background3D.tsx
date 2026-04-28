@@ -21,7 +21,7 @@ void main() {
   vUv = uv;
   gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }`,
-  /* fragment — Perlin-like noise + scroll-reactive color */
+  /* fragment — very dark near-black background with minimal purple tint */
   `uniform float uTime;
 uniform float uScroll;
 uniform vec2 uResolution;
@@ -80,17 +80,19 @@ void main(){
   float n3=cnoise(vec3(uv*5.0+0.6,t*2.0+2.0))*0.25;
   float n=n1+n2+n3;
 
-  vec3 colA=mix(vec3(0.01,0.01,0.02),vec3(0.04,0.01,0.08),s);
-  vec3 colB=mix(vec3(0.03,0.02,0.10),vec3(0.08,0.03,0.18),s);
-  vec3 colC=mix(vec3(0.08,0.05,0.22),vec3(0.16,0.06,0.32),s);
+  // Near-black base: max brightness ~0.025 (was 0.16), purple tint heavily reduced
+  vec3 colA=mix(vec3(0.004,0.003,0.006),vec3(0.010,0.004,0.016),s);
+  vec3 colB=mix(vec3(0.010,0.006,0.022),vec3(0.018,0.007,0.035),s);
+  vec3 colC=mix(vec3(0.020,0.010,0.045),vec3(0.030,0.012,0.060),s);
 
   vec3 col=mix(colA,colB,clamp(n*0.5+0.5,0.,1.));
   col=mix(col,colC,clamp(n*n*0.4,0.,1.));
 
+  // Glow at center: very subtle, dark indigo instead of bright purple
   float glow=1.0-length(uv*0.7);
   glow=clamp(pow(glow,2.0)*0.6,0.,1.);
-  vec3 glowCol=mix(vec3(0.15,0.1,0.5),vec3(0.3,0.1,0.6),s);
-  col+=glowCol*glow*(0.4+s*0.4);
+  vec3 glowCol=mix(vec3(0.04,0.02,0.12),vec3(0.06,0.02,0.14),s);
+  col+=glowCol*glow*(0.25+s*0.2);
 
   float vig=1.0-dot(uv*0.6,uv*0.6);
   col*=clamp(vig,0.,1.);

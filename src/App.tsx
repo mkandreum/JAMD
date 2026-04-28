@@ -273,6 +273,13 @@ export default function App() {
   useMotionValueEvent(smooth, 'change', (v) => setScrollVal(v));
   const showNav = scrollVal > 0.1;
 
+  // Opacity for 2D letters: fully visible at 0, starts fading at 0.15, gone by 0.32
+  const heroLettersOpacity = useTransform(scrollYProgress, [0, 0.15, 0.32], [1, 1, 0]);
+  const heroLettersScale   = useTransform(scrollYProgress, [0, 0.32], [1, 0.85]);
+  const heroLettersBlur    = useTransform(scrollYProgress, [0.15, 0.32], ['blur(0px)', 'blur(14px)']);
+  // Keep in DOM until fully invisible to allow the transition to complete
+  const heroLettersDisplay = useTransform(scrollYProgress, (v) => v >= 0.38 ? 'none' : 'flex');
+
   useIntroScroll();
 
   return (
@@ -280,14 +287,16 @@ export default function App() {
       <Background3D scrollPercent={scrollVal} />
       <ContactModal open={contactOpen} onClose={() => setContactOpen(false)} />
 
-      {/* 2D Letters hero */}
+      {/* 2D Letters hero — fade out driven purely by motion values, no hard display:none cutoff */}
       <motion.div className="hero-letters"
         style={{
-          opacity: useTransform(scrollYProgress, [0,0.15,0.25,0.40],[1,1,0.5,0]),
-          scale:   useTransform(scrollYProgress, [0,0.30],[1,0.85]),
-          filter:  useTransform(scrollYProgress, [0.15,0.30],['blur(0px)','blur(12px)']),
-          zIndex:100, position:'fixed', pointerEvents:'none',
-          display: scrollVal > 0.40 ? 'none' : 'flex',
+          opacity:  heroLettersOpacity,
+          scale:    heroLettersScale,
+          filter:   heroLettersBlur,
+          display:  heroLettersDisplay,
+          zIndex: 100,
+          position: 'fixed',
+          pointerEvents: 'none',
         }}
       >
         <div className="letter-row">JA</div>
@@ -463,7 +472,6 @@ export default function App() {
             <span className="tag-ia">Caso de éxito</span>
             <h2 className="section-title">De 0 a 800 leads<br />en 30 días</h2>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))', gap:'24px', marginTop:'2rem' }}>
-              {/* Descripción del caso */}
               <div style={{ padding:'2rem', borderRadius:'20px', background:'rgba(255,255,255,0.03)',
                 border:'1px solid rgba(255,255,255,0.06)' }}>
                 <p style={{ color:'var(--accent-glow)', fontSize:'0.75rem', fontWeight:700,
@@ -490,7 +498,6 @@ export default function App() {
                   ))}
                 </div>
               </div>
-              {/* Métricas */}
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px', alignContent:'start' }}>
                 {[
                   { value:'800+', label:'leads en 30 días' },
