@@ -37,19 +37,10 @@ function CrystalShape({
           <mesh>
             <icosahedronGeometry args={[1.2, 1]} />
             <MeshTransmissionMaterial
-              samples={3}
-              resolution={256}
-              thickness={0.6}
-              chromaticAberration={0.03}
-              anisotropy={0.15}
-              distortion={0}
-              distortionScale={0}
-              temporalDistortion={0}
-              color={color}
-              roughness={0.02}
-              transmission={1}
-              metalness={0.05}
-              ior={1.5}
+              samples={3} resolution={256} thickness={0.6}
+              chromaticAberration={0.03} anisotropy={0.15}
+              distortion={0} distortionScale={0} temporalDistortion={0}
+              color={color} roughness={0.02} transmission={1} metalness={0.05} ior={1.5}
             />
           </mesh>
         )}
@@ -57,19 +48,10 @@ function CrystalShape({
           <mesh>
             <octahedronGeometry args={[1, 0]} />
             <MeshTransmissionMaterial
-              samples={3}
-              resolution={256}
-              thickness={0.6}
-              chromaticAberration={0.03}
-              anisotropy={0.15}
-              distortion={0}
-              distortionScale={0}
-              temporalDistortion={0}
-              color={color}
-              roughness={0.02}
-              transmission={1}
-              metalness={0.05}
-              ior={1.5}
+              samples={3} resolution={256} thickness={0.6}
+              chromaticAberration={0.03} anisotropy={0.15}
+              distortion={0} distortionScale={0} temporalDistortion={0}
+              color={color} roughness={0.02} transmission={1} metalness={0.05} ior={1.5}
             />
           </mesh>
         )}
@@ -77,19 +59,10 @@ function CrystalShape({
           <mesh>
             <torusGeometry args={[1, 0.4, 32, 48]} />
             <MeshTransmissionMaterial
-              samples={3}
-              resolution={256}
-              thickness={0.6}
-              chromaticAberration={0.03}
-              anisotropy={0.15}
-              distortion={0}
-              distortionScale={0}
-              temporalDistortion={0}
-              color={color}
-              roughness={0.02}
-              transmission={1}
-              metalness={0.05}
-              ior={1.5}
+              samples={3} resolution={256} thickness={0.6}
+              chromaticAberration={0.03} anisotropy={0.15}
+              distortion={0} distortionScale={0} temporalDistortion={0}
+              color={color} roughness={0.02} transmission={1} metalness={0.05} ior={1.5}
             />
           </mesh>
         )}
@@ -98,37 +71,19 @@ function CrystalShape({
             <mesh rotation={[0, 0, Math.PI / 4]} position={[0.3, 0, 0]}>
               <torusGeometry args={[0.5, 0.12, 12, 32]} />
               <MeshTransmissionMaterial
-                samples={3}
-                resolution={256}
-                thickness={0.6}
-                chromaticAberration={0.03}
-                anisotropy={0.15}
-                distortion={0}
-                distortionScale={0}
-                temporalDistortion={0}
-                color={color}
-                roughness={0.02}
-                transmission={1}
-                metalness={0.05}
-                ior={1.5}
+                samples={3} resolution={256} thickness={0.6}
+                chromaticAberration={0.03} anisotropy={0.15}
+                distortion={0} distortionScale={0} temporalDistortion={0}
+                color={color} roughness={0.02} transmission={1} metalness={0.05} ior={1.5}
               />
             </mesh>
             <mesh rotation={[0, 0, -Math.PI / 4]} position={[-0.3, 0, 0]}>
               <torusGeometry args={[0.5, 0.12, 12, 32]} />
               <MeshTransmissionMaterial
-                samples={3}
-                resolution={256}
-                thickness={0.6}
-                chromaticAberration={0.03}
-                anisotropy={0.15}
-                distortion={0}
-                distortionScale={0}
-                temporalDistortion={0}
-                color={color}
-                roughness={0.02}
-                transmission={1}
-                metalness={0.05}
-                ior={1.5}
+                samples={3} resolution={256} thickness={0.6}
+                chromaticAberration={0.03} anisotropy={0.15}
+                distortion={0} distortionScale={0} temporalDistortion={0}
+                color={color} roughness={0.02} transmission={1} metalness={0.05} ior={1.5}
               />
             </mesh>
           </group>
@@ -138,20 +93,85 @@ function CrystalShape({
   );
 }
 
-/* ── Camera rig driven by scroll ── */
+/* ── Keyframe interpolation helper ── */
+function lerpKeyframes(
+  keyframes: { t: number; pos: [number, number, number]; lookAt: [number, number, number] }[],
+  scroll: number
+) {
+  // Clamp
+  if (scroll <= keyframes[0].t) return keyframes[0];
+  if (scroll >= keyframes[keyframes.length - 1].t) return keyframes[keyframes.length - 1];
+
+  // Find surrounding keyframes
+  let fromIdx = 0;
+  for (let i = 0; i < keyframes.length - 1; i++) {
+    if (scroll >= keyframes[i].t && scroll <= keyframes[i + 1].t) {
+      fromIdx = i;
+      break;
+    }
+  }
+  const from = keyframes[fromIdx];
+  const to = keyframes[fromIdx + 1];
+  const alpha = (scroll - from.t) / (to.t - from.t);
+  // Smooth-step easing
+  const ease = alpha * alpha * (3 - 2 * alpha);
+
+  return {
+    pos: [
+      THREE.MathUtils.lerp(from.pos[0], to.pos[0], ease),
+      THREE.MathUtils.lerp(from.pos[1], to.pos[1], ease),
+      THREE.MathUtils.lerp(from.pos[2], to.pos[2], ease),
+    ] as [number, number, number],
+    lookAt: [
+      THREE.MathUtils.lerp(from.lookAt[0], to.lookAt[0], ease),
+      THREE.MathUtils.lerp(from.lookAt[1], to.lookAt[1], ease),
+      THREE.MathUtils.lerp(from.lookAt[2], to.lookAt[2], ease),
+    ] as [number, number, number],
+  };
+}
+
+/* ── Camera path keyframes ──
+   Each keyframe: scroll progress [0..1], camera position, lookAt target
+   Phases:
+     0.00 → Intro: frontal, distante
+     0.15 → JA/MD explosion: sube y se aleja
+     0.30 → Orbita lateral izquierda
+     0.50 → Plunge hacia adelante (zoom in cinematográfico)
+     0.70 → Orbita por debajo
+     0.85 → Pull back con tilt
+     1.00 → Posición final estabilizada
+*/
+const CAMERA_PATH = [
+  { t: 0.00, pos: [0,  0,  20] as [number,number,number], lookAt: [0, 0, 0] as [number,number,number] },
+  { t: 0.15, pos: [0,  3,  22] as [number,number,number], lookAt: [0, 0, 0] as [number,number,number] },
+  { t: 0.30, pos: [-6, 2,  14] as [number,number,number], lookAt: [0, 0, 0] as [number,number,number] },
+  { t: 0.50, pos: [-2, -1,  8] as [number,number,number], lookAt: [0, 0, -2] as [number,number,number] },
+  { t: 0.70, pos: [5,  -3,  10] as [number,number,number], lookAt: [0, 0, 0] as [number,number,number] },
+  { t: 0.85, pos: [3,  2,  15] as [number,number,number], lookAt: [0, 1, 0] as [number,number,number] },
+  { t: 1.00, pos: [0,  1,  18] as [number,number,number], lookAt: [0, 0, 0] as [number,number,number] },
+];
+
+/* ── Camera rig driven by scroll (cinematic path) ── */
 function CameraRig({ scrollPercent }: { scrollPercent: number }) {
   const { camera } = useThree();
+  const targetPos = useRef(new THREE.Vector3(0, 0, 20));
+  const targetLook = useRef(new THREE.Vector3(0, 0, 0));
 
   useFrame(() => {
-    const sp = Math.min(scrollPercent, 1);
+    const sp = Math.min(Math.max(scrollPercent, 0), 1);
+    const kf = lerpKeyframes(CAMERA_PATH, sp);
 
-    // Dynamic camera movement based on scroll - más sutil
-    const targetZ = THREE.MathUtils.lerp(20, 12, sp);
-    const targetY = THREE.MathUtils.lerp(0, 1, sp);
-    const targetX = THREE.MathUtils.lerp(0, 2, sp);
+    // Update lerp targets
+    targetPos.current.set(...kf.pos);
+    targetLook.current.set(...kf.lookAt);
 
-    camera.position.lerp(new THREE.Vector3(targetX, targetY, targetZ), 0.05);
-    camera.lookAt(0, 0, 0);
+    // Damped follow — 0.04 = smooth cinematic feel, increase for snappier response
+    camera.position.lerp(targetPos.current, 0.04);
+
+    // Interpolate lookAt by lerping a temp vector
+    const currentLook = new THREE.Vector3();
+    currentLook.copy(targetLook.current);
+    camera.lookAt(currentLook);
   });
 
   return null;
@@ -161,8 +181,6 @@ function CameraRig({ scrollPercent }: { scrollPercent: number }) {
 function HeroText3D({ scrollPercent }: { scrollPercent: number }) {
   const groupRef = useRef<THREE.Group>(null);
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-
-  // Font URL - using a clean sans-serif font
   const fontUrl = 'https://unpkg.com/three@0.160.0/examples/fonts/helvetiker_bold.typeface.json';
 
   useFrame(({ clock }) => {
@@ -170,15 +188,12 @@ function HeroText3D({ scrollPercent }: { scrollPercent: number }) {
       const sp = scrollPercent;
       const t = clock.getElapsedTime();
       
-      // Scale: starts small, grows slightly but stays visible
       const scale = THREE.MathUtils.lerp(isMobile ? 0.6 : 0.8, isMobile ? 1.0 : 1.2, Math.min(sp * 2, 1));
       groupRef.current.scale.setScalar(scale);
       
-      // Dynamic rotation (idle + scroll)
       groupRef.current.rotation.y = THREE.MathUtils.lerp(-0.2, 0.5, sp) + Math.sin(t * 0.5) * 0.08;
       groupRef.current.rotation.x = THREE.MathUtils.lerp(0.1, -0.2, sp) + Math.cos(t * 0.4) * 0.05;
       
-      // Vertical separation / movement
       const separation = THREE.MathUtils.lerp(0, 4, sp);
       const floating = Math.sin(t * 1.5) * 0.2;
 
@@ -186,19 +201,16 @@ function HeroText3D({ scrollPercent }: { scrollPercent: number }) {
       const md = groupRef.current.children[1];
       
       if (ja) {
-        // Vertical layout: JA at top
         ja.position.y = 2.2 + separation * 0.8 + floating;
         ja.position.x = Math.sin(t * 0.5) * 0.2;
-        ja.rotation.z = Math.sin(t * 0.7) * 0.05;
+        (ja as THREE.Object3D).rotation.z = Math.sin(t * 0.7) * 0.05;
       }
       if (md) {
-        // Vertical layout: MD at bottom
         md.position.y = -2.2 - separation * 0.8 - floating;
         md.position.x = Math.cos(t * 0.5) * 0.2;
-        md.rotation.z = Math.cos(t * 0.7) * 0.05;
+        (md as THREE.Object3D).rotation.z = Math.cos(t * 0.7) * 0.05;
       }
 
-      // Transition: Appear when 2D letters fade out (starts early at 0.04), stay visible after
       let opacity = 0;
       if (sp < 0.04) {
         opacity = 0;
@@ -235,20 +247,11 @@ function HeroText3D({ scrollPercent }: { scrollPercent: number }) {
         >
           JA
           <MeshTransmissionMaterial
-            samples={8}
-            resolution={512}
-            thickness={3.0}
-            chromaticAberration={0.03}
-            anisotropy={0.1}
-            distortion={0}
-            distortionScale={0}
-            temporalDistortion={0}
-            color="#d0d8ff"
-            roughness={0.05}
-            transmission={1}
-            metalness={0}
-            ior={1.35}
-            backside={true}
+            samples={8} resolution={512} thickness={3.0}
+            chromaticAberration={0.03} anisotropy={0.1}
+            distortion={0} distortionScale={0} temporalDistortion={0}
+            color="#d0d8ff" roughness={0.05} transmission={1} metalness={0}
+            ior={1.35} backside={true}
           />
         </Text3D>
       </Center>
@@ -267,20 +270,11 @@ function HeroText3D({ scrollPercent }: { scrollPercent: number }) {
         >
           MD
           <MeshTransmissionMaterial
-            samples={8}
-            resolution={512}
-            thickness={3.0}
-            chromaticAberration={0.03}
-            anisotropy={0.1}
-            distortion={0}
-            distortionScale={0}
-            temporalDistortion={0}
-            color="#d0d8ff"
-            roughness={0.05}
-            transmission={1}
-            metalness={0}
-            ior={1.35}
-            backside={true}
+            samples={8} resolution={512} thickness={3.0}
+            chromaticAberration={0.03} anisotropy={0.1}
+            distortion={0} distortionScale={0} temporalDistortion={0}
+            color="#d0d8ff" roughness={0.05} transmission={1} metalness={0}
+            ior={1.35} backside={true}
           />
         </Text3D>
       </Center>
@@ -344,14 +338,12 @@ export default function Background3D({ scrollPercent }: { scrollPercent: number 
         <color attach="background" args={['#030303']} />
         <fog attach="fog" args={['#030303', isMobile ? 15 : 12, isMobile ? 40 : 35]} />
 
-        {/* Lighting — enhanced for crystal visibility */}
         <ambientLight intensity={0.5} />
         <directionalLight position={[5, 8, 5]} intensity={1.2} color="#e2e8f0" />
         <pointLight position={[-8, 3, -5]} color="#6366f1" intensity={5} distance={30} />
         <pointLight position={[8, -3, -5]} color="#818cf8" intensity={4} distance={25} />
         <spotLight position={[0, 10, 0]} intensity={2} angle={0.5} penumbra={1} color="#ffffff" />
 
-        {/* Crystal shapes: only appear when 2D text fades out */}
         <group>
           <group 
             ref={(ref) => {
@@ -368,46 +360,21 @@ export default function Background3D({ scrollPercent }: { scrollPercent: number 
               }
             }}
           >
-            {/* Main central cluster — letters become these */}
             <CrystalShape
-              basePos={[0, 1, 0]}
-              color="#c8c8d0"
-              geoType="infinity"
-              orbitRadius={3}
-              orbitSpeed={0.3}
-              orbitOffset={0}
-              scaleBase={1.2}
+              basePos={[0, 1, 0]} color="#c8c8d0" geoType="infinity"
+              orbitRadius={3} orbitSpeed={0.3} orbitOffset={0} scaleBase={1.2}
             />
             <CrystalShape
-              basePos={[0, -1, 0]}
-              color="#a0a0b0"
-              geoType="torus"
-              orbitRadius={3}
-              orbitSpeed={0.3}
-              orbitOffset={Math.PI}
-              scaleBase={1}
-            />
-  
-            {/* Satellite shapes — interact with the main pair */}
-            <CrystalShape
-              basePos={[3, 2, -4]}
-              color="#6366f1"
-              geoType="icosa"
-              orbitRadius={2}
-              orbitSpeed={0.5}
-              orbitOffset={1}
-              scaleBase={0.6}
-              floatSpeed={3}
+              basePos={[0, -1, 0]} color="#a0a0b0" geoType="torus"
+              orbitRadius={3} orbitSpeed={0.3} orbitOffset={Math.PI} scaleBase={1}
             />
             <CrystalShape
-              basePos={[-3, -2, -4]}
-              color="#818cf8"
-              geoType="octahedron"
-              orbitRadius={2}
-              orbitSpeed={0.5}
-              orbitOffset={3}
-              scaleBase={0.5}
-              floatSpeed={2}
+              basePos={[3, 2, -4]} color="#6366f1" geoType="icosa"
+              orbitRadius={2} orbitSpeed={0.5} orbitOffset={1} scaleBase={0.6} floatSpeed={3}
+            />
+            <CrystalShape
+              basePos={[-3, -2, -4]} color="#818cf8" geoType="octahedron"
+              orbitRadius={2} orbitSpeed={0.5} orbitOffset={3} scaleBase={0.5} floatSpeed={2}
             />
           </group>
         </group>
@@ -453,12 +420,7 @@ export default function Background3D({ scrollPercent }: { scrollPercent: number 
         <CameraRig scrollPercent={scrollPercent} />
 
         <EffectComposer multisampling={4}>
-          <Bloom 
-            mipmapBlur 
-            luminanceThreshold={1} 
-            levels={8} 
-            intensity={0.4} 
-          />
+          <Bloom mipmapBlur luminanceThreshold={1} levels={8} intensity={0.4} />
           <Noise opacity={0.012} />
           <Vignette eskil={false} offset={0.1} darkness={1.1} />
         </EffectComposer>
