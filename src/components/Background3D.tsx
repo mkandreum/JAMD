@@ -300,8 +300,8 @@ function lerpKeyframes(
   if (scroll <= keyframes[0].t) return keyframes[0];
   if (scroll >= keyframes[keyframes.length - 1].t) return keyframes[keyframes.length - 1];
   let fromIdx = 0;
-  for (let i = 0; i < keyframes.length - 1; i++) {
-    if (scroll >= keyframes[i].t && scroll <= keyframes[i + 1].t) { fromIdx = i; break; }
+  for (let j = 0; j < keyframes.length - 1; j++) {
+    if (scroll >= keyframes[j].t && scroll <= keyframes[j + 1].t) { fromIdx = j; break; }
   }
   const from = keyframes[fromIdx];
   const to   = keyframes[fromIdx + 1];
@@ -310,8 +310,8 @@ function lerpKeyframes(
     ? 4 * raw * raw * raw
     : 1 - Math.pow(-2 * raw + 2, 3) / 2;
   return {
-    pos:    [0,1,2].map(j => THREE.MathUtils.lerp(from.pos[j],    to.pos[j],    ease)) as [number,number,number],
-    lookAt: [0,1,2].map(j => THREE.MathUtils.lerp(from.lookAt[j], to.lookAt[j], ease)) as [number,number,number],
+    pos:    [0,1,2].map(k => THREE.MathUtils.lerp(from.pos[k],    to.pos[k],    ease)) as [number,number,number],
+    lookAt: [0,1,2].map(k => THREE.MathUtils.lerp(from.lookAt[k], to.lookAt[k], ease)) as [number,number,number],
   };
 }
 
