@@ -31,7 +31,6 @@ function ContactModal({ open, onClose }: { open: boolean; onClose: () => void })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Conecta aquí tu backend / Formspree / EmailJS
     setSent(true);
     setTimeout(() => { setSent(false); onClose(); setForm({ name: '', email: '', message: '' }); }, 2500);
   };
@@ -192,10 +191,7 @@ function AnimatedText({ children }: { children: React.ReactNode }) {
 /* ─── INTRO AUTO-SCROLL ─── */
 function useIntroScroll() {
   useEffect(() => {
-    // Empieza a los 800ms (antes era 1800ms)
     const DELAY    = 800;
-    // Target aumentado para llegar al centro de la sección "Redefinimos" (1ª AnimatedText)
-    // El spacer ocupa 200vh, cada AnimatedText ocupa 200vh; queremos el centro del primero → ~300vh
     const TARGET   = window.innerHeight * 3.2;
     const DURATION = 3000;
     let start: number | null = null;
@@ -466,8 +462,7 @@ export default function App() {
           <div style={{ maxWidth:'1000px', width:'100%', padding:'0 4%' }}>
             <span className="tag-ia">Caso de éxito</span>
             <h2 className="section-title">De 0 a 800 leads<br />en 30 días</h2>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'24px', marginTop:'2rem',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))', gap:'24px', marginTop:'2rem' }}>
               {/* Descripción del caso */}
               <div style={{ padding:'2rem', borderRadius:'20px', background:'rgba(255,255,255,0.03)',
                 border:'1px solid rgba(255,255,255,0.06)' }}>
@@ -753,7 +748,6 @@ export default function App() {
                 <FaWhatsapp /> WhatsApp directo
               </a>
             </div>
-            {/* Respuesta garantizada */}
             <div style={{ marginTop:'2rem', display:'flex', gap:'24px', justifyContent:'center', flexWrap:'wrap' }}>
               {[
                 '✓ Respuesta en menos de 24h',
@@ -772,7 +766,6 @@ export default function App() {
         <footer style={{ padding:'60px 6% 40px', borderTop:'1px solid rgba(255,255,255,0.04)' }}>
           <div style={{ maxWidth:'1100px', margin:'0 auto', display:'grid',
             gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))', gap:'2rem', marginBottom:'3rem' }}>
-            {/* Brand */}
             <div>
               <div style={{ fontWeight:900, fontSize:'1.2rem', marginBottom:'0.6rem' }}>
                 JAMD<span style={{ color:'var(--accent-glow)', fontWeight:400, marginLeft:'6px',
@@ -798,7 +791,6 @@ export default function App() {
                 ))}
               </div>
             </div>
-            {/* Servicios */}
             <div>
               <div style={{ fontSize:'0.7rem', fontWeight:700, textTransform:'uppercase',
                 letterSpacing:'0.15em', color:'rgba(255,255,255,0.3)', marginBottom:'1rem' }}>
@@ -816,7 +808,6 @@ export default function App() {
                 </div>
               ))}
             </div>
-            {/* Empresa */}
             <div>
               <div style={{ fontSize:'0.7rem', fontWeight:700, textTransform:'uppercase',
                 letterSpacing:'0.15em', color:'rgba(255,255,255,0.3)', marginBottom:'1rem' }}>
@@ -834,7 +825,6 @@ export default function App() {
                 </div>
               ))}
             </div>
-            {/* Contacto */}
             <div>
               <div style={{ fontSize:'0.7rem', fontWeight:700, textTransform:'uppercase',
                 letterSpacing:'0.15em', color:'rgba(255,255,255,0.3)', marginBottom:'1rem' }}>
@@ -854,7 +844,6 @@ export default function App() {
               </button>
             </div>
           </div>
-          {/* Bottom bar */}
           <div style={{ borderTop:'1px solid rgba(255,255,255,0.04)', paddingTop:'1.5rem',
             display:'flex', flexWrap:'wrap', gap:'1rem', justifyContent:'space-between', alignItems:'center' }}>
             <p style={{ color:'rgba(255,255,255,0.15)', fontSize:'0.65rem',

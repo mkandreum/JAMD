@@ -75,13 +75,11 @@ void main(){
   float t=uTime*0.12;
   float s=uScroll;
 
-  // Layered noise for organic movement
   float n1=cnoise(vec3(uv*1.2,t));
   float n2=cnoise(vec3(uv*2.5+0.3,t*1.4+1.0))*0.5;
   float n3=cnoise(vec3(uv*5.0+0.6,t*2.0+2.0))*0.25;
   float n=n1+n2+n3;
 
-  // Scroll-reactive color palette: dark indigo -> deep violet -> midnight blue
   vec3 colA=mix(vec3(0.01,0.01,0.02),vec3(0.04,0.01,0.08),s);
   vec3 colB=mix(vec3(0.03,0.02,0.10),vec3(0.08,0.03,0.18),s);
   vec3 colC=mix(vec3(0.08,0.05,0.22),vec3(0.16,0.06,0.32),s);
@@ -89,13 +87,11 @@ void main(){
   vec3 col=mix(colA,colB,clamp(n*0.5+0.5,0.,1.));
   col=mix(col,colC,clamp(n*n*0.4,0.,1.));
 
-  // Radial glow at center that pulses with scroll
   float glow=1.0-length(uv*0.7);
   glow=clamp(pow(glow,2.0)*0.6,0.,1.);
   vec3 glowCol=mix(vec3(0.15,0.1,0.5),vec3(0.3,0.1,0.6),s);
   col+=glowCol*glow*(0.4+s*0.4);
 
-  // Vignette
   float vig=1.0-dot(uv*0.6,uv*0.6);
   col*=clamp(vig,0.,1.);
 
@@ -163,17 +159,13 @@ function ParticleField({ scrollPercent }: { scrollPercent: number }) {
     mat.size = 0.04 + Math.abs(velocityRef.current) * 0.02;
     mat.opacity = 0.15 + Math.abs(velocityRef.current) * 0.1;
 
-    // Animate positions using noise-like offset
     const pos = geo.attributes.position.array as Float32Array;
     const rnd = geo.attributes.aRandom.array as Float32Array;
     for (let i = 0; i < COUNT; i++) {
       const ri = rnd[i * 3];
-      // Drift each particle with individual phase
       pos[i * 3 + 1] += 0.003 * (1 + ri) + velocityRef.current * 0.002;
-      // Wrap vertically
       if (pos[i * 3 + 1] > 20) pos[i * 3 + 1] = -20;
       if (pos[i * 3 + 1] < -20) pos[i * 3 + 1] = 20;
-      // Subtle horizontal sway
       pos[i * 3 + 0] += Math.sin(t * 0.3 + ri * 6.28) * 0.003;
     }
     geo.attributes.position.needsUpdate = true;
@@ -252,7 +244,7 @@ function EnergyRing({ scrollPercent }: { scrollPercent: number }) {
   });
   return (
     <mesh ref={ref}>
-      <torusGeometry args={[3, 0.015, 8, low?64:128]} />
+      <torusGeometry args={[3, 0.015, 8, low ? 64 : 128]} />
       <meshBasicMaterial color="#6366f1" transparent depthWrite={false} blending={THREE.AdditiveBlending} />
     </mesh>
   );
@@ -264,7 +256,7 @@ function FloatingDebris() {
   const low = useMemo(() => isLowEnd(), []);
   const COUNT = low ? 8 : 18;
   const debris = useMemo(() =>
-    Array.from({ length: COUNT }, (_, i) => ({
+    Array.from({ length: COUNT }, (_el, _idx) => ({
       pos: [(Math.random()-0.5)*22, (Math.random()-0.5)*14, (Math.random()-0.5)*10-2] as [number,number,number],
       speed: 0.2 + Math.random() * 0.5,
       phase: Math.random() * Math.PI * 2,
@@ -275,8 +267,8 @@ function FloatingDebris() {
   useFrame(({ clock }) => {
     if (!group.current) return;
     const t = clock.getElapsedTime();
-    group.current.children.forEach((child, i) => {
-      const d = debris[i];
+    group.current.children.forEach((child, idx) => {
+      const d = debris[idx];
       child.position.y = d.pos[1] + Math.sin(t * d.speed + d.phase) * 0.8;
       child.position.x = d.pos[0] + Math.cos(t * d.speed * 0.7 + d.phase) * 0.4;
       child.rotateOnAxis(d.axis, 0.008 * d.speed);
@@ -285,13 +277,13 @@ function FloatingDebris() {
 
   return (
     <group ref={group}>
-      {debris.map((d, i) => (
-        <mesh key={i} position={d.pos} scale={d.scale}>
+      {debris.map((d, idx) => (
+        <mesh key={idx} position={d.pos} scale={d.scale}>
           <octahedronGeometry args={[1, 0]} />
           <meshStandardMaterial
-            color={i % 3 === 0 ? '#8b8fff' : i % 3 === 1 ? '#c0b8ff' : '#6060cc'}
+            color={idx % 3 === 0 ? '#8b8fff' : idx % 3 === 1 ? '#c0b8ff' : '#6060cc'}
             metalness={0.9} roughness={0.1}
-            emissive={i % 3 === 0 ? '#4040aa' : '#303080'}
+            emissive={idx % 3 === 0 ? '#4040aa' : '#303080'}
             emissiveIntensity={0.5}
           />
         </mesh>
@@ -300,7 +292,7 @@ function FloatingDebris() {
   );
 }
 
-/* ─── Camera path with smooth quaternion-like interpolation ─── */
+/* ─── Camera path with smooth cubic ease-in-out ─── */
 function lerpKeyframes(
   keyframes: { t: number; pos: [number,number,number]; lookAt: [number,number,number] }[],
   scroll: number
@@ -314,7 +306,6 @@ function lerpKeyframes(
   const from = keyframes[fromIdx];
   const to   = keyframes[fromIdx + 1];
   const raw  = (scroll - from.t) / (to.t - from.t);
-  // Smooth-step + ease-in-out cubic for cinematic feel
   const ease = raw < 0.5
     ? 4 * raw * raw * raw
     : 1 - Math.pow(-2 * raw + 2, 3) / 2;
@@ -324,7 +315,6 @@ function lerpKeyframes(
   };
 }
 
-// Cinematic camera path — 8 keyframes, inspired by scroll-directed 3D scene technique
 const CAMERA_PATH = [
   { t: 0.00, pos: [0,  0,  20] as [number,number,number], lookAt: [0,  0,  0] as [number,number,number] },
   { t: 0.12, pos: [2,  2,  22] as [number,number,number], lookAt: [0,  0,  0] as [number,number,number] },
@@ -340,7 +330,6 @@ function CameraRig({ scrollPercent }: { scrollPercent: number }) {
   const { camera } = useThree();
   const targetPos = useRef(new THREE.Vector3(0, 0, 20));
   const lookVec   = useRef(new THREE.Vector3(0, 0, 0));
-  // Subtle mouse parallax
   const mouse = useRef({ x: 0, y: 0 });
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
@@ -354,7 +343,6 @@ function CameraRig({ scrollPercent }: { scrollPercent: number }) {
   useFrame(() => {
     const sp  = Math.min(Math.max(scrollPercent, 0), 1);
     const kf  = lerpKeyframes(CAMERA_PATH, sp);
-    // Add subtle mouse parallax offset (±0.6 units)
     targetPos.current.set(
       kf.pos[0] + mouse.current.x * 0.6,
       kf.pos[1] - mouse.current.y * 0.4,
@@ -471,7 +459,6 @@ function PostFX({ scrollPercent, low }: { scrollPercent: number; low: boolean })
   const dofRef = useRef<any>(null);
   useFrame(() => {
     if (!dofRef.current) return;
-    // Focus pulls closer as you scroll into the scene
     dofRef.current.circleOfConfusionMaterial.uniforms.focusDistance.value =
       THREE.MathUtils.lerp(0.015, 0.005, scrollPercent);
   });
@@ -514,10 +501,8 @@ function SectionMarkers3D({ scrollPercent }: { scrollPercent: number }) {
   const groupRef = useRef<THREE.Group>(null);
   useFrame(() => {
     if (!groupRef.current) return;
-    groupRef.current.children.forEach((child, i) => {
-      const sectionStart = i * 0.25;
-      const isActive = scrollPercent > sectionStart && scrollPercent < sectionStart + 0.3;
-      child.scale.setScalar(THREE.MathUtils.lerp(child.scale.x, isActive ? 1 : 0.3, 0.08));
+    groupRef.current.children.forEach((child, _idx) => {
+      child.scale.setScalar(THREE.MathUtils.lerp(child.scale.x, child.scale.x > 0.5 ? 1 : 0.3, 0.08));
       (child as THREE.Mesh).rotation.x += 0.01;
       (child as THREE.Mesh).rotation.y += 0.015;
     });
@@ -525,12 +510,12 @@ function SectionMarkers3D({ scrollPercent }: { scrollPercent: number }) {
   const positions: [number,number,number][] = [[-4,2,-8],[4,1,-10],[-3,-1,-12],[3,0,-15]];
   return (
     <group ref={groupRef}>
-      {positions.map((pos, i) => (
-        <mesh key={i} position={pos}>
+      {positions.map((pos, idx) => (
+        <mesh key={idx} position={pos}>
           <octahedronGeometry args={[0.3, 0]} />
           <meshStandardMaterial
-            color={i%2===0?'#6366f1':'#818cf8'}
-            emissive={i%2===0?'#6366f1':'#818cf8'}
+            color={idx%2===0?'#6366f1':'#818cf8'}
+            emissive={idx%2===0?'#6366f1':'#818cf8'}
             emissiveIntensity={1.5}
             transparent opacity={0.7}
             depthWrite={false}
@@ -565,23 +550,18 @@ export default function Background3D({ scrollPercent }: { scrollPercent: number 
         }}
         frameloop="always"
       >
-        {/* Shader noise background — replaces flat black color */}
         <NoiseBg scrollPercent={scrollPercent} />
 
         <ambientLight intensity={0.4} />
         <directionalLight position={[5, 8, 5]} intensity={1.0} color="#e2e8f0" />
         <DynamicLights scrollPercent={scrollPercent} />
 
-        {/* Reactive particle field */}
         <ParticleField scrollPercent={scrollPercent} />
 
-        {/* Floating debris shards */}
         {!low && <FloatingDebris />}
 
-        {/* Energy ring */}
         <EnergyRing scrollPercent={scrollPercent} />
 
-        {/* Crystal shapes */}
         <group visible={crystalOpacity > 0}>
           <CrystalShape basePos={[0,1,0]}    color="#c8c8d0" geoType="infinity"   orbitRadius={3} orbitSpeed={0.3} orbitOffset={0}       scaleBase={1.2} />
           <CrystalShape basePos={[0,-1,0]}   color="#a0a0b0" geoType="torus"     orbitRadius={3} orbitSpeed={0.3} orbitOffset={Math.PI}  scaleBase={1.0} />
@@ -589,7 +569,6 @@ export default function Background3D({ scrollPercent }: { scrollPercent: number 
           <CrystalShape basePos={[-3,-2,-4]} color="#818cf8" geoType="octahedron" orbitRadius={2} orbitSpeed={0.5} orbitOffset={3}        scaleBase={0.5} />
         </group>
 
-        {/* Sparkles */}
         {!low && (
           <group visible={sparkleOpacity > 0}>
             <Sparkles count={isMobile ? 40 : 80} scale={28} size={0.9} speed={0.2} color="#ffffff" opacity={sparkleOpacity} />
